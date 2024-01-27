@@ -192,7 +192,9 @@ function solve_opf(file_name)
     c13 = ExaModels.constraint!(w, c9, g.bus => -pg[g.i] for g in data.gen)
     c14 = ExaModels.constraint!(w, c10, g.bus => -qg[g.i] for g in data.gen)
 
-    model = ExaModels.ExaModel(w)
+    model = ExaModels.TimedNLPModel( # a thin layer adding timing feature
+        ExaModels.ExaModel(w)
+    ) 
 
     model_build_time = time() - time_model_start
 
@@ -220,14 +222,12 @@ function solve_opf(file_name)
     solve_time = time() - time_solve_start
     total_time = time() - time_data_start
 
-    # TODO: once a built-in timer is implemented in ExaModels, report callback timing
-    
-    # total_callback_time =
-    #     nlp_block.evaluator.eval_objective_timer +
-    #     nlp_block.evaluator.eval_objective_gradient_timer +
-    #     nlp_block.evaluator.eval_constraint_timer +
-    #     nlp_block.evaluator.eval_constraint_jacobian_timer +
-    #     nlp_block.evaluator.eval_hessian_lagrangian_timer
+    total_callback_time =
+        model.stats.obj_time +
+        model.stats.grad_time +
+        model.stats.cons_time +
+        model.stats.jac_coord_time +
+        model.stats.hess_coord_time
 
     println("")
     println("\033[1mSummary\033[0m")
@@ -240,15 +240,15 @@ function solve_opf(file_name)
     println("     data time.: $(data_load_time)")
     println("     build time: $(model_build_time)")
     println("     solve time: $(solve_time)")
-    # println("      callbacks: $(total_callback_time)")
+    println("      callbacks: $(total_callback_time)")
     println("")
-    # println("   callbacks time:")
-    # println("   * obj.....: $(nlp_block.evaluator.eval_objective_timer)")
-    # println("   * grad....: $(nlp_block.evaluator.eval_objective_gradient_timer)")
-    # println("   * cons....: $(nlp_block.evaluator.eval_constraint_timer)")
-    # println("   * jac.....: $(nlp_block.evaluator.eval_constraint_jacobian_timer)")
-    # println("   * hesslag.: $(nlp_block.evaluator.eval_hessian_lagrangian_timer)")
-    # println("")
+    println("   callbacks time:")
+    println("   * obj.....: $(model.stats.obj_time)")
+    println("   * grad....: $(model.stats.grad_time)")
+    println("   * cons....: $(model.stats.cons_time)")
+    println("   * jac.....: $(model.stats.jac_coord_time)")
+    println("   * hesslag.: $(model.stats.hess_coord_time)")
+    println("")
 
     va_sol = ExaModels.solution(result, va)
     va_dict = Dict("va_$(i)" => va_sol[busdict[i]] for (i,b) in enumerate(data.bus))
@@ -279,7 +279,7 @@ function solve_opf(file_name)
         "time_data" => data_load_time,
         "time_build" => model_build_time,
         "time_solve" => solve_time,
-        # "time_callbacks" => total_callback_time,
+        "time_callbacks" => total_callback_time,
         "solution" => Dict(
             va_dict...,
             vm_dict...,

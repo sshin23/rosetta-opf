@@ -450,8 +450,8 @@ uuid = "90fa49ef-747e-5e6f-a989-263ba693cf1a"
 version = "0.5.2"
 
 [[deps.ExaModels]]
-deps = ["NLPModels", "SolverCore"]
-git-tree-sha1 = "054b99d8f8d19a81a1fbbad74223af16f8012f2a"
+deps = ["NLPModels", "Printf", "SolverCore"]
+path = "/home/sshin/git/ExaModels.jl/"
 uuid = "1037b233-b668-4ce9-9b63-f9f681f55dd2"
 version = "0.4.2"
 
